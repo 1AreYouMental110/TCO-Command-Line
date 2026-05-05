@@ -3900,7 +3900,7 @@ function restorebrick(waittime)
 	if not game.ReplicatedStorage:FindFirstChild(brickname) then
 		local brick = Instance.new("Part")
 		brick.Name = brickname
-		brick:SetTag("FAKE")
+		brick:AddTag("FAKE")
 		brick.Parent = game.ReplicatedStorage
 	end
 	for i,v in pairs(localplr.Character:GetChildren()) do
