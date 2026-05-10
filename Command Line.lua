@@ -536,6 +536,28 @@ function fixarguments(toolname,arguments) -- this took way too long just to conv
 	end
 	return newarguments
 end
+function createElement(classname,properties)
+	local element = Instance.new(classname)
+	for i,v in pairs(properties) do
+		if i == "Rainbow" then
+			table.insert(torainbow,element)
+		else
+			element[i] = v
+		end
+	end
+	return element
+end
+
+local font = Enum.Font.Michroma
+local sgui = Instance.new("ScreenGui")
+sgui.IgnoreGuiInset = true
+sgui.Name = "CommandsUI"
+--local huifunc = gethui or get_hidden_gui
+if huifunc then
+	sgui.Parent = huifunc()
+else
+	sgui.Parent = game.CoreGui
+end
 
 function rainbowterrain(paints,hrp,i)
 	local hx = hrp.Position.X
@@ -2688,7 +2710,7 @@ local rtool = Instance.new("Tool")
 rtool.Grip = CFrame.Angles(0,math.rad(180),0)
 rtool.Name = "Rotation Tool"
 local handle = Instance.new("Part")
-handle.Size = Vector3.new(1,1,1)
+handle.Size = Vector3.one * 1.001
 handle.Transparency = 1
 handle.CanCollide = false
 handle.Name = "Handle"
@@ -3601,7 +3623,7 @@ addcmd({
 local dectool = Instance.new("Tool")
 dectool.Name = "Decal Tool"
 local handle = Instance.new("Part")
-handle.Size = Vector3.new(1,1,1)
+handle.Size = Vector3.one * 1.001
 handle.Shape = Enum.PartType.Cylinder
 handle.CanCollide = false
 handle.Name = "Handle"
@@ -3910,7 +3932,7 @@ addcmd({
 local reptool = Instance.new("Tool")
 reptool.Name = "Replication Tool"
 local handle = Instance.new("Part")
-handle.Size = Vector3.new(1,1,1)
+handle.Size = Vector3.one * 1.001
 handle.Shape = Enum.PartType.Cylinder
 handle.CanCollide = false
 handle.Name = "Handle"
@@ -3936,11 +3958,6 @@ for _,v in pairs({"Left","Right","Back","Front"}) do
 end
 
 function createreplicationtool()
-	--[[local sound = Instance.new("Sound")
-	sound.SoundId = "rbxassetid://6897623656"
-	sound.Parent = game.Workspace
-	sound:Play()
-	game.Debris:AddItem(sound, 5)]]
 	local connections = {}
 	currentreptool = reptool:Clone()
 	local bhighlight = currentreptool.SelectionBox
@@ -4083,6 +4100,113 @@ addcmd({
 	LocalOnly = true,
 	Callback = function(plr,args)
 		createreplicationtool().Parent = (plr.Character and not plr.Character:FindFirstChildWhichIsA("Tool") and plr.Character) or plr.Backpack
+	end
+})
+
+local modtool = Instance.new("Tool")
+modtool.Name = "Moderation Tool"
+local handle = Instance.new("Part")
+handle.Size = Vector3.one * 1.001
+handle.Shape = Enum.PartType.Cylinder
+handle.CanCollide = false
+handle.Name = "Handle"
+handle.Color = Color3.fromRGB(255,255,0)
+handle.Parent = modtool
+local playerhighlight = Instance.new("Highlight")
+playerhighlight.Parent = modtool
+local modtxt = "reset"
+local modbox = createElement("TextBox",{
+	Size = UDim2.new(0.2,0,0.1,0),
+	Position = UDim2.new(0.5,0,0.7,0),
+	AnchorPoint = Vector2.new(0.5,0),
+	BackgroundColor3 = Color3.fromRGB(100,100,100),
+	BorderColor3 = Color3.fromRGB(255,255,255),
+	BorderSizePixel = 3,
+	TextScaled = true,
+	TextColor3 = Color3.fromRGB(255,255,255),
+	PlaceholderText = "The text here will be said before the player's name (default: \"reset\").",
+	Font = font,
+	Text = "",
+	Visible = false,
+	Parent = sgui,
+	Rainbow = true
+})
+modbox.FocusLost:Connect(function()
+	modtxt = modbox.Text
+end)
+
+function recursiveparent(obj)
+	if not obj then
+		return nil
+	end
+	local p = obj.Parent
+	repeat
+		if game.Players:GetPlayerFromCharacter(p) then
+			return game.Players:GetPlayerFromCharacter(p)
+		end
+		p = p.Parent
+	until p == nil or p.Parent == game
+	return nil
+end
+
+function createmodtool()
+	local connections = {}
+	currentmodtool = modtool:Clone()
+	local phighlight = currentmodtool.Highlight
+	phighlight.Parent = game.CoreGui
+	local equipped = false
+	table.insert(connections,currentmodtool.Equipped:Connect(function()
+		equipped = true
+		modbox.Visible = true
+	end))
+	table.insert(connections,currentmodtool.Unequipped:connect(function()
+		equipped = false
+		modbox.Visible = false
+	end))
+	
+	table.insert(connections,currentmodtool.Activated:Connect(function()
+		
+		if mouse.Target and recursiveparent(mouse.Target) then
+			local player = recursiveparent(mouse.Target)
+			sayto(nil,";"..modtxt.." "..sanitizename(player.Name))
+		end
+	end))
+
+	table.insert(connections,rs.Heartbeat:Connect(function()
+		if equipped and mouse.Target and recursiveparent(mouse.Target) then
+			phighlight.Adornee = recursiveparent(mouse.Target).Character
+		else
+			phighlight.Adornee = nil
+		end
+	end))
+	
+	table.insert(connections,currentmodtool.AncestryChanged:Connect(function()
+		if not currentmodtool or not currentmodtool.Parent or not currentmodtool.Parent.Parent then
+			for i,v in pairs(connections) do
+				v:Disconnect()
+			end
+			modbox.Visible = false
+		end
+	end))
+	
+	table.insert(tools,{
+		currentmodtool,
+		phighlight
+	})
+	
+	currentmodtool.Parent = localplr.Backpack
+	task.wait()
+	
+	return currentmodtool
+end
+
+addcmd({
+	Name = {"moderationtool","modtool"},
+	Description = "Gives you the Moderation Tool (Click on a Player and they will be targetted for a command, RANKED CANNOT ACCESS)",
+	Arguments = {},
+	LocalOnly = true,
+	Callback = function(plr,args)
+		createmodtool().Parent = (plr.Character and not plr.Character:FindFirstChildWhichIsA("Tool") and plr.Character) or plr.Backpack
 	end
 })
 
@@ -4494,29 +4618,6 @@ addcmd({
 		savecmdldata()
 	end
 })
-
-local font = Enum.Font.Michroma
-local sgui = Instance.new("ScreenGui")
-sgui.IgnoreGuiInset = true
-sgui.Name = "TelekinesisUI"
-local huifunc = gethui or get_hidden_gui
-if huifunc then
-	sgui.Parent = huifunc()
-else
-	sgui.Parent = game.CoreGui
-end
-
-function createElement(classname,properties)
-	local element = Instance.new(classname)
-	for i,v in pairs(properties) do
-		if i == "Rainbow" then
-			table.insert(torainbow,element)
-		else
-			element[i] = v
-		end
-	end
-	return element
-end
 
 local cmdbar = createElement("TextBox",{
 	Size = UDim2.new(0.2,0,0.75,0),
