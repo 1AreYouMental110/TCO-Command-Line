@@ -494,12 +494,12 @@ function settag(t,from,num)
 		tagged[t] = tick()+num
 	end
 end
-function checktool(t)
+function checktool(t,uneq)
 	if lte ~= t.Name then
 		t.Parent = localplr.Character
-		--[[if not isog then
+		if not isog and not uneq then
 			t.Parent = localplr.Backpack
-		end]]
+		end
 	end
 end
 function fixarguments(toolname,arguments) -- this took way too long just to convert some arguments, my brain isnt made for ts
@@ -957,8 +957,8 @@ function buildblock(pos,texture,color,bsize,bsizev3,premadebuild,origmaterial,sp
 	if not s then print(e) end
 end
 local queue = {}
-function addqueue(btoolname,args,sethrp,inog)
-	table.insert(queue,{ToolName=btoolname,Arguments=args,SetHRP=sethrp or false,AlreadyFixedForOG=inog})
+function addqueue(btoolname,args,sethrp,inog,dontchecktool)
+	table.insert(queue,{ToolName=btoolname,Arguments=args,SetHRP=sethrp or false,AlreadyFixedForOG=inog,DontCheckTool=dontchecktool})
 end
 local blockfuncs = {}
 local selected = {}
@@ -1343,7 +1343,7 @@ createsb({
 				Color3.new(1,0,0),
 				"glass",
 				""
-			},3)
+			},3,nil,true)
 			task.wait(.1)
 			addqueue("Paint",{
 				block,
@@ -1353,7 +1353,7 @@ createsb({
 				Color3.new(1,0,0),
 				"collide",
 				""
-			},3)
+			},3,nil,true)
 			task.wait(5)
 			addqueue("Paint",{
 				block,
@@ -1363,7 +1363,7 @@ createsb({
 				Color3.new(1,0,0),
 				"plastic",
 				""
-			},3)
+			},3,nil,true)
 			task.wait(.1)
 			addqueue("Paint",{
 				block,
@@ -1373,7 +1373,7 @@ createsb({
 				Color3.new(1,0,0),
 				"collide",
 				""
-			},3)
+			},3,nil,true)
 		end
 	end
 })
@@ -2649,7 +2649,7 @@ m = 1/1.5
 local c4 = w:Clone()
 c4.Position = w.CFrame * Vector3.new(m,0,0) -- front bottom left
 c4.Name = "fbl"
-c4.Rotation = Vector3.new(0,0,180)
+c4.CFrame = c4.CFrame * CFrame.Angles(0,0,math.rad(180))
 c4.Color = Color3.fromRGB(0,255,0)
 local c3 = w:Clone()
 c3.Position = w.CFrame * Vector3.new(0,m,0) -- front top right
@@ -2662,24 +2662,24 @@ c5.Color = Color3.fromRGB(255,0,0)
 local c1 = w:Clone()
 c1.Position = w.CFrame * Vector3.new(0,0,m) -- back bottom right
 c1.Name = "bbr"
-c1.Rotation = Vector3.new(180,0,0)
+c1.CFrame = c1.CFrame * CFrame.Angles(math.rad(180),0,0)
 c1.Color = Color3.fromRGB(0,255,0)
 local c7 = w:Clone()
 c7.Position = w.CFrame * Vector3.new(m,0,m) -- back bottom left
 c7.Name = "bbl"
-c7.Rotation = Vector3.new(180,0,0)
+c7.CFrame = c7.CFrame * CFrame.Angles(math.rad(180),0,0)
 c7.Color = Color3.fromRGB(0,0,255)
 local c2 = w:Clone()
 c2.Position = w.CFrame * Vector3.new(0,m,m) -- back top right
 c2.Name = "btr"
-c2.Rotation = Vector3.new(180,0,180)
+c2.CFrame = c2.CFrame * CFrame.Angles(math.rad(180),0,math.rad(180))
 c2.Color = Color3.fromRGB(255,0,0)
 local c6 = w:Clone()
 c6.Position = w.CFrame * Vector3.new(m,m,m) -- back top left
 c6.Name = "btl"
-c6.Rotation = Vector3.new(180,0,180)
+c6.CFrame = c6.CFrame * CFrame.Angles(math.rad(180),0,math.rad(180))
 c6.Color = Color3.fromRGB(255,255,255)
-w.Rotation = Vector3.new(0,0,180)
+w.CFrame = w.CFrame * CFrame.Angles(0,0,math.rad(180))
 local finished = union(w,{c1,c2,c3,c4,c5,c6,c7},true)
 finished.Anchored = false
 finished.CanCollide = false
@@ -2736,6 +2736,9 @@ function hover(part,cfr,override)
 		hovergyr.D = 6200
 		hoverpos.Position = cfr.Position
 		hovergyr.CFrame = cfr
+		if isnetworkowner(part) then
+			part.CFrame = cfr
+		end
 		local function delete(w)
 			coroutine.wrap(function()
 				task.wait(w or 0)
@@ -2906,17 +2909,18 @@ local ConfirmButton = Instance.new("TextButton")
 Shape.Name = "RotateAngleUi"
 Shape.Parent = game.CoreGui
 Shape.Enabled = false
+Shape.IgnoreGuiInset = true
 Shape.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = Shape
-MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 MainFrame.BackgroundTransparency = 0.5
 MainFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 MainFrame.BorderSizePixel = 0
 MainFrame.Position = UDim2.new(0.5, 0, 0.03, 0)
-MainFrame.Size = UDim2.new(0, 200, 0, 120)
+MainFrame.Size = UDim2.new(0, 200, 0, 200)
 
 FrameStroke.Name = "FrameStroke"
 FrameStroke.Parent = MainFrame
@@ -2936,25 +2940,15 @@ TitleButton.BackgroundTransparency = 1.000
 TitleButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
 TitleButton.BorderSizePixel = 0
 TitleButton.Position = UDim2.new(0.5, 0, 0.05, 0)
-TitleButton.Size = UDim2.new(0.9, 0, 0.25, 0)
+TitleButton.Size = UDim2.new(0.9, 0, 0.15, 0)
 TitleButton.Font = Enum.Font.FredokaOne
 TitleButton.Text = "Rotate"
 TitleButton.TextColor3 = Color3.fromRGB(128, 255, 128)
 TitleButton.TextScaled = true
-TitleButton.TextSize = 14.000
+TitleButton.TextSize = 14
 TitleButton.TextStrokeColor3 = Color3.fromRGB(64, 128, 64)
-TitleButton.TextStrokeTransparency = 0.000
+TitleButton.TextStrokeTransparency = 0
 TitleButton.TextWrapped = true
-
-InputFrame.Name = "InputFrame"
-InputFrame.Parent = MainFrame
-InputFrame.AnchorPoint = Vector2.new(0.5, 0)
-InputFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-InputFrame.BackgroundTransparency = 0.200
-InputFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-InputFrame.BorderSizePixel = 0
-InputFrame.Position = UDim2.new(0.5, 0, 0.35, 0)
-InputFrame.Size = UDim2.new(0.85, 0, 0.2, 0)
 
 InputCorner.CornerRadius = UDim.new(0.1, 0)
 InputCorner.Name = "InputCorner"
@@ -2973,9 +2967,9 @@ InputLabel.Font = Enum.Font.FredokaOne
 InputLabel.Text = "Angle: 15"
 InputLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 InputLabel.TextScaled = true
-InputLabel.TextSize = 14.000
+InputLabel.TextSize = 14
 InputLabel.TextStrokeColor3 = Color3.fromRGB(128, 128, 128)
-InputLabel.TextStrokeTransparency = 0.000
+InputLabel.TextStrokeTransparency = 0
 InputLabel.TextWrapped = true
 
 TextBox.Parent = MainFrame
@@ -2984,8 +2978,8 @@ TextBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 TextBox.BackgroundTransparency = 0.200
 TextBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
 TextBox.BorderSizePixel = 0
-TextBox.Position = UDim2.new(0.5, 0, 0.6, 0)
-TextBox.Size = UDim2.new(0.8, 0, 0.2, 0)
+TextBox.Position = UDim2.new(0.5, 0, 0.45, 0)
+TextBox.Size = UDim2.new(0.8, 0, 0.15, 0)
 TextBox.Font = Enum.Font.FredokaOne
 TextBox.PlaceholderColor3 = Color3.fromRGB(128, 128, 128)
 TextBox.PlaceholderText = "Type a number that the script will round nearest to!"
@@ -3046,7 +3040,7 @@ ConfirmButton.BackgroundTransparency = 0.5
 ConfirmButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
 ConfirmButton.BorderSizePixel = 0
 ConfirmButton.Position = UDim2.new(0.5, 0, 1.05, 0)
-ConfirmButton.Size = UDim2.new(0.5, 0, 0.15, 0)
+ConfirmButton.Size = UDim2.new(0.7, 0, 0.15, 0)
 ConfirmButton.Font = Enum.Font.FredokaOne
 ConfirmButton.Text = "Confirm"
 ConfirmButton.TextColor3 = Color3.fromRGB(64, 255, 64)
@@ -3073,8 +3067,80 @@ InputFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 InputFrame.BackgroundTransparency = 0.200
 InputFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 InputFrame.BorderSizePixel = 0
-InputFrame.Position = UDim2.new(0.5, 0, 0.35, 0)
-InputFrame.Size = UDim2.new(0.85, 0, 0.2, 0)
+InputFrame.Position = UDim2.new(0.5, 0, 0.25, 0)
+InputFrame.Size = UDim2.new(0.85, 0, 0.15, 0)
+
+local RampButton = Instance.new("TextButton")
+RampButton.Parent = MainFrame
+RampButton.AnchorPoint = Vector2.new(0.5, 0)
+RampButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+RampButton.BackgroundTransparency = 0.200
+RampButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+RampButton.BorderSizePixel = 0
+RampButton.Position = UDim2.new(0.275, 0, 0.65, 0)
+RampButton.Size = UDim2.new(0.4, 0, 0.225, 0)
+RampButton.Font = Enum.Font.FredokaOne
+RampButton.Text = "Toggle Ramp: OFF"
+RampButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+RampButton.TextScaled = true
+RampButton.TextSize = 14.000
+RampButton.TextStrokeColor3 = Color3.fromRGB(64, 64, 64)
+RampButton.TextStrokeTransparency = 0.000
+RampButton.TextWrapped = true
+
+local RampSelect = Instance.new("TextButton")
+RampSelect.Parent = MainFrame
+RampSelect.AnchorPoint = Vector2.new(0.5, 0)
+RampSelect.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+RampSelect.BackgroundTransparency = 0.200
+RampSelect.BorderColor3 = Color3.fromRGB(0, 0, 0)
+RampSelect.BorderSizePixel = 0
+RampSelect.Position = UDim2.new(0.725, 0, 0.65, 0)
+RampSelect.Size = UDim2.new(0.4, 0, 0.225, 0)
+RampSelect.Font = Enum.Font.FredokaOne
+RampSelect.Text = "Select Block Edge: OFF"
+RampSelect.TextColor3 = Color3.fromRGB(255, 255, 255)
+RampSelect.TextScaled = true
+RampSelect.TextSize = 14.000
+RampSelect.TextStrokeColor3 = Color3.fromRGB(64, 64, 64)
+RampSelect.TextStrokeTransparency = 0.000
+RampSelect.TextWrapped = true
+
+local dots = {}
+local ramptoggle = false
+local rampselect = false
+RampButton.MouseButton1Click:Connect(function()
+	ramptoggle = not ramptoggle
+	if ramptoggle then
+		RampButton.Text = "Toggle Ramp: ON"
+		for i,v in pairs(dots) do
+			i.Transparency = 0.2
+		end
+	else
+		RampButton.Text = "Toggle Ramp: OFF"
+		if not rampselect then
+			for i,v in pairs(dots) do
+				i.Transparency = 1
+			end
+		end
+	end
+end)
+RampSelect.MouseButton1Click:Connect(function()
+	rampselect = not rampselect
+	if rampselect then
+		RampSelect.Text = "Select Block Edge: ON"
+		for i,v in pairs(dots) do
+			i.Transparency = 0.2
+		end
+	else
+		RampSelect.Text = "Select Block Edge: OFF"
+		if not ramptoggle then
+			for i,v in pairs(dots) do
+				i.Transparency = 1
+			end
+		end
+	end
+end)
 
 local typenum = 0
 local types = {
@@ -3186,6 +3252,34 @@ function IsSelectable(part,hit)
 	end
 	return false
 end
+local edges = {
+	{"-X","-Y"},
+	{"-X","Y"},
+	{"X","-Y"},
+	{"X","Y"},
+	{"-Z","-Y"},
+	{"-Z","Y"},
+	{"Z","-Y"},
+	{"Z","Y"},
+	{"-X","-Z"},
+	{"-X","Z"},
+	{"X","-Z"},
+	{"X","Z"},
+
+	{"X","Y","Z"},
+	{"-X","Y","Z"},
+	{"X","-Y","Z"},
+	{"X","Y","-Z"},
+	{"-X","-Y","Z"},
+	{"X","-Y","-Z"},
+	{"-X","Y","-Z"},
+	{"-X","-Y","-Z"}
+}
+local VectorDimensions = {
+	X = Vector3.new(1,0,0),
+	Y = Vector3.new(0,1,0),
+	Z = Vector3.new(0,0,1)
+}
 function createrotool()
 	local sound = Instance.new("Sound")
 	sound.SoundId = "rbxassetid://6897623656"
@@ -3211,17 +3305,34 @@ function createrotool()
 	to_undo_part = nil
 	to_undo_cframe = nil
 	local sclone = nil
+	local sclone2 = nil
+	local dot = nil
 	local mdown
 	local b4r
 	local handle = currentrtool.Handle
 	local union = handle:FindFirstChildWhichIsA("PartOperation")
 	handle.Weld.Part0 = union
 	handle.Weld.Part1 = handle
+	local dottemplate = Instance.new("Part")
+	dottemplate.Size = Vector3.one
+	dottemplate.Shape = Enum.PartType.Ball
+	dottemplate.Transparency = 1
+	dottemplate.Material = Enum.Material.SmoothPlastic
+	dottemplate.CanCollide = false
+	dottemplate.CanQuery = false
+	dottemplate.Color = Color3.new(1,1,0)
+	if ramptoggle then
+		dottemplate.Transparency = 0.2
+	end
+	local weld = Instance.new("Weld")
+	weld.Part0 = dottemplate
+	weld.Parent = dottemplate
 	local conveyorbeam = currentrtool.Beam
 	local batt0 = conveyorbeam.A0
 	local batt1 = conveyorbeam.A1
 	conveyorbeam.Enabled = rotooltype.name == "Linear Velocity"
 	table.insert(convbeams,conveyorbeam)
+	local corner = {"X","Y"}
 	table.insert(connections,currentrtool.Equipped:Connect(function()
 		union.Parent = workspace
 		equipped = true
@@ -3249,6 +3360,7 @@ function createrotool()
 		if sclone then
 			conveyorbeam.Parent = nil
 			sclone:Destroy()
+			sclone2:Destroy()
 		end
 		equipped = false
 		Shape.Enabled = false
@@ -3264,12 +3376,40 @@ function createrotool()
 			if sclone then
 				conveyorbeam.Parent = nil
 				sclone:Destroy()
+				sclone2:Destroy()
 			end
 			sclone = selection:Clone()
 			sclone.Size = sclone.Size + Vector3.new(0.01,0.01,0.01)
 			sclone.Transparency = 0.5
 			sclone.Anchored = true
 			sclone.CanCollide = false
+			sclone.CanQuery = false
+			sclone2 = selection:Clone()
+			sclone2.Size = sclone.Size + Vector3.new(0.01,0.01,0.01)
+			sclone2.Transparency = 1
+			sclone2.Anchored = true
+			sclone2.CanCollide = false
+			sclone2.CanQuery = false
+			dot = dottemplate:Clone()
+			dot.Weld.Part0 = dot
+			dot.Weld.Part1 = sclone
+			local pos2 = Vector3.zero
+			for i,v in pairs(corner) do
+				local n = 1
+				if string.find(v,"-") then
+					n = -1
+					v = string.sub(v,2)
+				end
+				pos2 += VectorDimensions[v]*((selection.Size/2)[v] * n)
+			end
+			dot.Weld.C1 = CFrame.new(pos2)
+			if ramptoggle or rampselect then
+				dot.Transparency = 0.2
+			else
+				dot.Transparency = 1
+			end
+			dots[dot] = true
+			dot.Parent = sclone
 			conveyorbeam.Parent = sclone
 			batt0.CFrame = CFrame.new(0,sclone.Size.Y/2+0.1,sclone.Size.Z/2) * lvToOrientation(sclone.CFrame.Rotation)
 			batt1.CFrame = CFrame.new(0,sclone.Size.Y/2+0.1,-sclone.Size.Z/2) * lvToOrientation(sclone.CFrame.Rotation)
@@ -3277,9 +3417,32 @@ function createrotool()
 			conveyorbeam.Width1 = sclone.Size.X
 			conveyorbeam.TextureSpeed = lspeedNumber / conveyorbeam.TextureLength
 			sclone.Parent = workspace
-			table.insert(tools,{sclone})
+			sclone2.Parent = workspace
+			table.insert(tools,{sclone,sclone2})
 			selectionbox.Adornee = sclone
-			rotatehandles.Adornee = sclone
+			rotatehandles.Adornee = sclone2
+		end
+		if selection and rampselect and (mouse.Target == selection) then
+			local pos = selection.CFrame:PointToObjectSpace(mouse.Hit.Position)
+			local hs = selection.Size / 2
+			local low = {999}
+			for i,v in pairs(edges) do
+				local pos2 = Vector3.zero
+				for i,v in pairs(v) do
+					local n = 1
+					if string.find(v,"-") then
+						n = -1
+						v = string.sub(v,2)
+					end
+					pos2 += VectorDimensions[v]*(hs[v] * n)
+				end
+				local mag = (pos - pos2).Magnitude
+				if mag < low[1] then
+					low = {mag,v,pos2}
+				end
+			end
+			corner = low[2]
+			dot.Weld.C1 = CFrame.new(low[3])
 		end
 	end))
 	
@@ -3316,7 +3479,7 @@ function createrotool()
 					end
 				end)()
 			end
-			lastCFrame = sclone.CFrame
+			lastCFrame = sclone2.CFrame
 			to_undo_part = selection
 			to_undo_cframe = lastCFrame
 			rotatehandles.Axes = Axes.new(axis)
@@ -3337,6 +3500,7 @@ function createrotool()
 		end
 		if sclone then
 			sclone.Transparency = 0.5
+			sclone2.CFrame = sclone.CFrame
 		end
 		to_undo_part = nil
 		to_undo_cframe = nil
@@ -3349,7 +3513,30 @@ function createrotool()
 			return
 		end
 		if sclone then
-			sclone.CFrame = lastCFrame * CFrame.Angles(unpack(AngleFromAxis(axis,relativeAngle)))
+			if ramptoggle then
+				local hs = selection.Size / 2
+				local pos2 = Vector3.zero
+				for i,v in pairs(corner) do
+					local n = 1
+					if string.find(v,"-") then
+						n = -1
+						v = string.sub(v,2)
+					end
+					pos2 += VectorDimensions[v]*(hs[v] * n)
+				end
+				local pivot = lastCFrame:PointToWorldSpace(pos2)
+				local rot = CFrame.Angles(unpack(AngleFromAxis(axis,relativeAngle)))
+				sclone.CFrame =
+					CFrame.new(pivot)
+					* rot
+					* CFrame.new(-pivot)
+					* lastCFrame
+				sclone2.CFrame = lastCFrame * rot
+			else
+				local rot = CFrame.Angles(unpack(AngleFromAxis(axis,relativeAngle)))
+				sclone.CFrame = lastCFrame * rot
+				sclone2.CFrame = lastCFrame * rot
+			end
 		end
 	end))
 	
@@ -3358,6 +3545,7 @@ function createrotool()
 			rotate(selection,sclone.CFrame,currentrtool)
 			conveyorbeam.Parent = nil
 			sclone:Destroy()
+			sclone2:Destroy()
 		end
 	end))
 	
@@ -3926,16 +4114,11 @@ function restorebrick(waittime)
 		local ins = 1
 		for i,v in pairs(getgenv().brickcollection) do
 			if v ~= nil then
-				if v:GetFullName() ~= brickname and v.Name ~= "Debris" then
+				if v:GetFullName() ~= brickname and v.Name ~= "Debris" and v:IsA("BasePart") and v.Anchored == false then
 					table.insert(currbc,1,v)
 					ins += 1
 				else
 					table.insert(currbc,v)
-					if i%2 == 1 then
-						table.insert(currbc,v)
-					else
-						table.insert(currbc,ins,v)
-					end
 				end
 			else
 				table.remove(getgenv().brickcollection,table.find(getgenv().brickcollection,v))
@@ -4242,7 +4425,7 @@ addcmd({
 })
 -- credits to infinite yield for some of this
 addcmd({
-	Name = {"fixcam","restorecam"},
+	Name = {"fix","fixcam","restorecam"},
 	Description = "Fixes your camera, but also prevents that flying bug and fixes the missiles/any other tool breaker bugs.",
 	Arguments = {},
 	LocalOnly = true,
@@ -4690,7 +4873,7 @@ coroutine.wrap(function() -- 3 while statements wont lag.. right?
 					squeue.Arguments = fixarguments(squeue.Arguments)
 				end
 				local t = tools[(qti%#tools)+1]
-				checktool(t.bt)
+				checktool(t.bt,squeue.dontchecktool)
 				t.e:FireServer(table.unpack(squeue.Arguments))
 				task.wait((ws*1.5)/#tools)
 			else
@@ -4730,6 +4913,7 @@ getgenv().tcocmddestroy = function()
 		lv:Destroy()
 	end
 	Shape:Destroy()
+	sui:Destroy()
 	cubechild:Disconnect()
 	highlight:Destroy()
 	wbs = false
