@@ -12,7 +12,8 @@ if not s then
 		Prefix = {
 			Local = prefix
 		},
-		AutoExecScriptPack = false
+		AutoExecScriptPack = false,
+		ClickedRotoolSwitch = false
 	}
 	savecmdldata()
 else
@@ -2789,8 +2790,9 @@ function rotate(part,cframe,currentrtool)
 	local done2 = false
 	local t = tick()+10
 	local p = nil
+	novel = true
 	repeat
-		teleportto(part.CFrame + Vector3.new(0,part.Size.Y/2+2.5,0))
+		teleportto(part.Position)
 		if part.Anchored and not gettag(part) then
 			settag(part,0.6)
 			local args = {
@@ -2838,7 +2840,7 @@ function rotate(part,cframe,currentrtool)
 		p = cfolder[localplr.Name].ChildAdded:Wait()
 		p.CanCollide = false
 		repeat
-			teleportto(p.CFrame + Vector3.new(0,p.Size.Y/2+2.5,0))
+			teleportto(cframe.Position)
 			if p.Anchored and not gettag(p) then
 				settag(p,0.6)
 				local args = {
@@ -2876,6 +2878,7 @@ function rotate(part,cframe,currentrtool)
 		}
 		equiptool("Paint").Script.Event:FireServer(unpack(args))
 	end)
+	novel = false
 	done = true
 	if not s then print(e) end
 	currentrtool.Parent = localplr.Character
@@ -2949,6 +2952,16 @@ TitleButton.TextSize = 14
 TitleButton.TextStrokeColor3 = Color3.fromRGB(64, 128, 64)
 TitleButton.TextStrokeTransparency = 0
 TitleButton.TextWrapped = true
+
+local arrow = Instance.new("ImageLabel")
+arrow.Size = UDim2.new(1,0,1,0)
+arrow.Image = "rbxthumb://type=Asset&id=139666305844535&w=420&h=420"
+arrow.BackgroundTransparency = 1
+arrow.AnchorPoint = Vector2.new(1,0)
+arrow.Position = UDim2.new(0.25,0,-0.1,0)
+arrow.ZIndex = 999
+arrow.Parent = MainFrame
+arrow.Visible = not cmdldata.ClickedRotoolSwitch
 
 InputCorner.CornerRadius = UDim.new(0.1, 0)
 InputCorner.Name = "InputCorner"
@@ -3177,6 +3190,11 @@ local function updateInputDisplay()
 end
 local convbeams = {}
 TitleButton.MouseButton1Click:Connect(function()
+	if not cmdldata.ClickedRotoolSwitch then
+		cmdldata.ClickedRotoolSwitch = true
+		arrow.Visible = false
+		savecmdldata()
+	end
 	typenum = typenum + 1
 	rotooltype = types[typenum%#types+1]
 	TitleButton.Text = rotooltype.name
