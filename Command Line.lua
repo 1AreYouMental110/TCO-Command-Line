@@ -3828,18 +3828,18 @@ function createdecaltool()
 			if gcp("hum").RigType ~= Enum.HumanoidRigType.R15 then
 				sayto(nil,";r15 me")
 				task.wait(3)
-				eenl(nil,true)
+				eenl()
 			end
 			if getmemeify() then
 				mid = getmemeify()
 			else
-				eenl(nil,true)
+				eenl()
 				sayto(nil,";memeify "..memeifyid)
 				mid = memeifyid
 				waitmemeify()
 			end
 			if mid ~= memeifyid then
-				eenl(nil,true)
+				eenl()
 				sayto(nil,";memeify "..memeifyid)
 				waitmemeify()
 			end
@@ -3865,7 +3865,7 @@ function createdecaltool()
 					end
 				end)()
 				task.wait(1.5)
-				eenl(nil,true)
+				eenl()
 				sayto(nil,string.format(";width me %s",tostring(selection.Size[firstone]/6)))
 				task.wait(1.5)
 				sayto(nil,string.format(";height me %s",tostring(selection.Size[secondone]/6)))
