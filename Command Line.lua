@@ -664,6 +664,9 @@ function equiptool(toolname,unequipothers)
 	end]]
 	return rt
 end
+function namestring(plr)
+	return plr.DisplayName..((plr.DisplayName ~= plr.Name and (" / "..plr.Name)) or "")
+end
 
 local mult = 4
 local built = false
@@ -3195,6 +3198,7 @@ local types = {
 		theme={1, 0, 0}
 	},
 }
+function localbypass()
 local function updateInputDisplay()
 	local num
 	if rotooltype.name == "Rotate" then
@@ -3821,14 +3825,21 @@ function createdecaltool()
 			local selectside = mouse.TargetSurface
 			selection = mouse.Target
 			local mid = nil
+			if gcp("hum").RigType ~= Enum.HumanoidRigType.R15 then
+				sayto(nil,";r15 me")
+				task.wait(3)
+				eenl(nil,true)
+			end
 			if getmemeify() then
 				mid = getmemeify()
 			else
+				eenl(nil,true)
 				sayto(nil,";memeify "..memeifyid)
 				mid = memeifyid
 				waitmemeify()
 			end
 			if mid ~= memeifyid then
+				eenl(nil,true)
 				sayto(nil,";memeify "..memeifyid)
 				waitmemeify()
 			end
@@ -3845,10 +3856,6 @@ function createdecaltool()
 			novel = true
 			local looping = true
 			pcall(function()
-				if gcp("hum").RigType ~= Enum.HumanoidRigType.R15 then
-					sayto(nil,";r15 me")
-					task.wait(3)
-				end
 				gcp("hum").PlatformStand = true
 				--local d = hover(gcp("hrp"),surfacecfr)
 				coroutine.wrap(function()
@@ -3858,6 +3865,7 @@ function createdecaltool()
 					end
 				end)()
 				task.wait(1.5)
+				eenl(nil,true)
 				sayto(nil,string.format(";width me %s",tostring(selection.Size[firstone]/6)))
 				task.wait(1.5)
 				sayto(nil,string.format(";height me %s",tostring(selection.Size[secondone]/6)))
@@ -4619,6 +4627,89 @@ addcmd({
 	end
 })
 
+addcmd({
+	Name = {"checkbkitdisable","checkbkit","bkitcheck"},
+	Description = "Checks if bkit is disabled.",
+	Arguments = {},
+	Callback = function(plr,args)
+		local rsb = game.ReplicatedStorage:FindFirstChild("Brick")
+		if rsb and not rsb:HasTag("FAKE") then
+			sayto(plr,"Bkit is not disabled.",Color3.fromRGB(0,200,0))
+		else
+			sayto(plr,"Bkit is disabled.",Color3.fromRGB(200,0,0))
+		end
+	end
+})
+
+local bkitusage = {}
+local recentbkitusage = {}
+function dochar(c,plr)
+	coroutine.wrap(function()
+		local hrp = c:WaitForChild("HumanoidRootPart",math.huge)
+		local BDRS = nil
+		pcall(function()
+			BDRS = hrp:WaitForChild("Brick",5)
+		end)
+		local Sh = hrp:WaitForChild("Crunch",math.huge)
+		local Sp = hrp:WaitForChild("Splash",math.huge)
+		local LBDRS = nil
+		local LSh = nil
+		local LSp = nil
+		local function checklasttooleq(tool)
+			if not tool or not tool:IsA("Tool") then
+				return
+			end
+			if tool.Name == "Build" or tool.Name == "Delete" or tool.Name == "Resize" or tool.Name == "Sign" then
+				LBDRS = tool.Name
+			elseif tool.Name == "Shovel" then
+				LSh = tool.Name
+			elseif tool.Name == "Paint" then
+				LSp = tool.Name
+			end
+		end
+		checklasttooleq(c:FindFirstChildWhichIsA("Tool"))
+		c.ChildAdded:Connect(checklasttooleq)
+		if BDRS then
+			BDRS.Played:Connect(function()
+				bkitusage[plr] = LBDRS
+				recentbkitusage[LBDRS] = plr
+			end)
+		end
+		Sh.Played:Connect(function()
+			bkitusage[plr] = LSh
+			recentbkitusage[LSh] = plr
+		end)
+		Sp.Played:Connect(function()
+			bkitusage[plr] = LSp
+			recentbkitusage[LSp] = plr
+		end)
+	end)()
+end
+function doplr(plr)
+	if plr.Character then
+		dochar(plr.Character,plr)
+	end
+	plr.CharacterAdded:Connect(function(c)
+		dochar(c,plr)
+	end)
+end
+game.Players.PlayerAdded:Connect(doplr)
+for i,v in pairs(game.Players:GetPlayers()) do
+	doplr(v)
+end
+
+local rsb = game.ReplicatedStorage:FindFirstChild("Brick")
+if rsb and not rsb:HasTag("FAKE") then
+	table.insert(conn,rsb.AncestryChanged:Connect(function()
+		if not recentbkitusage["Delete"] then
+			repeat
+				task.wait()
+			until recentbkitusage["Delete"]
+		end
+		notify("Bkit has been disabled!\nSuspect: "..namestring(recentbkitusage["Delete"]),Color3.fromRGB(200,0,0))
+	end))
+end
+
 local cmdbar = createElement("TextBox",{
 	Size = UDim2.new(0.2,0,0.75,0),
 	Position = UDim2.new(0.7,0,0,3),
@@ -4868,6 +4959,7 @@ table.insert(conn,localplr.CharacterAdded:Connect(function(c)
 		end
 	end))
 end))
+
 local updy = 0
 coroutine.wrap(function()
 	while on do
@@ -5073,3 +5165,6 @@ getgenv().tcocmddestroy = function()
 end
 
 notify("TCO Command Line has finished loading! There are currently "..tostring(#cmdnames).." Commands.\nCredits: Mental and Qilex.\nYour prefix is currently \""..prefix.."\".\nYou can either enter a command via the command bar at the top right or use Roblox's chat.\nTo see the list of commands, type "..prefix.."cmds.\nTo see information about the command, type "..prefix.."help command_name.\nEnjoy!")
+
+end
+localbypass()
