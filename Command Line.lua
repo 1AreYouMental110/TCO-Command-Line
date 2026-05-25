@@ -352,7 +352,7 @@ function teleportto(cframe)
 		hrp.CFrame = cframe
 	end
 end
-function notify(text,color)
+local function notify(text,color)
 	color = color or Color3.fromRGB(0,200,0)
 	game.TextChatService.TextChannels.RBXGeneral:DisplaySystemMessage(string.format("<font color='#%s'>%s</font>",color:ToHex(),text))
 end
@@ -4113,13 +4113,14 @@ addcmd({
 
 local modtool = Instance.new("Tool")
 modtool.Name = "Moderation Tool"
-local handle = Instance.new("Part")
+modtool.RequiresHandle = false
+--[[local handle = Instance.new("Part")
 handle.Size = Vector3.one * 1.001
 handle.Shape = Enum.PartType.Cylinder
 handle.CanCollide = false
 handle.Name = "Handle"
 handle.Color = Color3.fromRGB(255,255,0)
-handle.Parent = modtool
+handle.Parent = modtool]]
 local playerhighlight = Instance.new("Highlight")
 playerhighlight.Parent = modtool
 local modtxt = "reset"
@@ -4206,6 +4207,67 @@ function createmodtool()
 	task.wait()
 	
 	return currentmodtool
+end
+
+addcmd({
+	Name = {"moderationtool","modtool"},
+	Description = "Gives you the Moderation Tool (Click on a Player and they will be targetted for a command, RANKED CANNOT ACCESS)",
+	Arguments = {},
+	LocalOnly = true,
+	Callback = function(plr,args)
+		createmodtool().Parent = (plr.Character and not plr.Character:FindFirstChildWhichIsA("Tool") and plr.Character) or plr.Backpack
+	end
+})
+
+function createstealtool()
+	local connections = {}
+	currentstealtool = currentstealtool:Clone()
+	local phighlight = currentstealtool.Highlight
+	phighlight.Parent = game.CoreGui
+	local equipped = false
+	table.insert(connections,currentstealtool.Equipped:Connect(function()
+		equipped = true
+		modbox.Visible = true
+	end))
+	table.insert(connections,currentstealtool.Unequipped:connect(function()
+		equipped = false
+		modbox.Visible = false
+	end))
+	
+	table.insert(connections,currentstealtool.Activated:Connect(function()
+		
+		if mouse.Target and recursiveparent(mouse.Target) then
+			local player = recursiveparent(mouse.Target)
+			sayto(nil,";"..modtxt.." "..sanitizename(player.Name))
+		end
+	end))
+
+	table.insert(connections,rs.Heartbeat:Connect(function()
+		if equipped and mouse.Target and recursiveparent(mouse.Target) then
+			phighlight.Adornee = recursiveparent(mouse.Target).Character
+		else
+			phighlight.Adornee = nil
+		end
+	end))
+	
+	table.insert(connections,currentstealtool.AncestryChanged:Connect(function()
+		if not currentstealtool or not currentstealtool.Parent or not currentstealtool.Parent.Parent then
+			for i,v in pairs(connections) do
+				v:Disconnect()
+			end
+			modbox.Visible = false
+		end
+	end))
+	
+	table.insert(tools,{
+		currentstealtool,
+		phighlight
+	})
+	
+	currentstealtool.Parent = localplr.Backpack
+	task.wait()
+	
+	return currentstealtool
 end
 
 addcmd({
@@ -4637,6 +4699,12 @@ addcmd({
 			sayto(plr,"Bkit is not disabled.",Color3.fromRGB(0,200,0))
 		else
 			sayto(plr,"Bkit is disabled.",Color3.fromRGB(200,0,0))
+			task.wait(0.1)
+			if workspace.Bricks:FindFirstChildWhichIsA("BasePart",true) then
+				sayto(plr,"There are bricks found in the game, you can still build on them.",Color3.fromRGB(0,200,0))
+			elseif #getgenv().brickcollection > 0 then
+				sayto(plr,"There are bricks that was stored before they got deleted, you can try to restore them using "..prefix.."restorebrick.",Color3.fromRGB(0,200,0))
+			end
 		end
 	end
 })
