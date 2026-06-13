@@ -5,7 +5,12 @@ local s,cmdldata = pcall(function()
 	return http:JSONDecode(readfile("TCOCommandLineData.json"))
 end)
 function savecmdldata()
-	writefile("TCOCommandLineData.json",http:JSONEncode(cmdldata))
+	local s = pcall(function()
+		writefile("TCOCommandLineData.json",http:JSONEncode(cmdldata))
+	end)
+	if not s then
+		warn("failed to writefile")
+	end
 end
 if not s then
 	cmdldata = {
