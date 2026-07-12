@@ -4279,6 +4279,7 @@ function createstealtool()
 	return currentstealtool
 end
 
+--[[ -- Steal tool placeholder
 addcmd({
 	Name = {"moderationtool","modtool"},
 	Description = "Gives you the Moderation Tool (Click on a Player and they will be targetted for a command, RANKED CANNOT ACCESS)",
@@ -4288,6 +4289,7 @@ addcmd({
 		createmodtool().Parent = (plr.Character and not plr.Character:FindFirstChildWhichIsA("Tool") and plr.Character) or plr.Backpack
 	end
 })
+]]
 
 if getgenv().brickcollection == nil then
 	getgenv().brickcollection = {}
@@ -4504,7 +4506,8 @@ addcmd({
 		end
 	end
 })
-addcmd({
+
+--[[addcmd({
 	Name = {"fixbrick","fixblock","fixcube","fixbuild","fixbkit"},
 	Description = "Reverts the ReplicatedStorage Brick back to it's normal state.",
 	Arguments = {},
@@ -4543,6 +4546,7 @@ addcmd({
 		end
 	end
 })
+]]
 
 --[[
 addcmd({
