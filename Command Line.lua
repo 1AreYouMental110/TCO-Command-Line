@@ -3618,6 +3618,7 @@ function createrotool()
 	return currentrtool
 end
 
+--[[
 addcmd({
 	Name = {"rotool","rtool","rotatetool"},
 	Description = "Gives you the Rotate Tool (RANKED CANNOT ACCESS)",
@@ -3627,6 +3628,7 @@ addcmd({
 		createrotool().Parent = (plr.Character and not plr.Character:FindFirstChildWhichIsA("Tool") and plr.Character) or plr.Backpack
 	end
 })
+]]
 
 -- formula: block size divided by 6 (memeify)
 local dectool = Instance.new("Tool")
@@ -4106,6 +4108,7 @@ function createreplicationtool()
 	return currentreptool
 end
 
+--[[
 addcmd({
 	Name = {"replicationtool","reptool"},
 	Description = "Gives you the Replication Tool (Click on a block and it will copy it all to the ReplicatedStorage Brick, RANKED CANNOT ACCESS)",
@@ -4115,6 +4118,7 @@ addcmd({
 		createreplicationtool().Parent = (plr.Character and not plr.Character:FindFirstChildWhichIsA("Tool") and plr.Character) or plr.Backpack
 	end
 })
+]]
 
 local modtool = Instance.new("Tool")
 modtool.Name = "Moderation Tool"
@@ -4540,6 +4544,7 @@ addcmd({
 	end
 })
 
+--[[
 addcmd({
 	Name = {"disablebuild","disablebuilding","disablebkit"},
 	Description = "Disables building (DELETE TOOL REQUIRED)",
@@ -4564,6 +4569,7 @@ addcmd({
 		end
 	end
 })
+]]
 
 addcmd({
 	Name = {"disabledeletesound","disabledelsound","deletesound"},
@@ -4694,6 +4700,7 @@ addcmd({
 	end
 })
 
+--[[
 addcmd({
 	Name = {"checkbkitdisable","checkbkit","bkitcheck"},
 	Description = "Checks if bkit is disabled.",
@@ -4713,6 +4720,7 @@ addcmd({
 		end
 	end
 })
+]]
 
 local bkitusage = {}
 local recentbkitusage = {}
